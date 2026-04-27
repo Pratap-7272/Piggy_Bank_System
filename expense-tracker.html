@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Vault - Expense Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --deep-purple: #1a0a2e;
+            --rich-purple: #2d1b4e;
+            --accent-purple: #7c3aed;
+            --bright-purple: #a78bfa;
+            --glass-white: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #e9d5ff;
+            --text-secondary: #c4b5fd;
+            --shadow-purple: rgba(124, 58, 237, 0.3);
+        }
+
+        body {
+            font-family: 'Syne', sans-serif;
+            background: linear-gradient(135deg, #0f0518 0%, #1a0a2e 50%, #2d1b4e 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #e9d5ff 0%, #a78bfa 50%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 40px var(--shadow-purple);
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .glass-card {
+            background: var(--glass-white);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 8px 32px 0 rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+
+        .glass-card:nth-child(2) { animation-delay: 0.1s; }
+        .glass-card:nth-child(3) { animation-delay: 0.2s; }
+        .glass-card:nth-child(4) { animation-delay: 0.3s; }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--bright-purple);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--accent-purple), var(--bright-purple));
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--accent-purple);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-box {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-purple);
+            box-shadow: 0 10px 30px var(--shadow-purple);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--bright-purple);
+            text-shadow: 0 0 20px var(--shadow-purple);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 20px var(--shadow-purple);
+        }
+
+        input::placeholder {
+            color: rgba(196, 181, 253, 0.5);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent-purple), var(--bright-purple));
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px var(--shadow-purple);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--shadow-purple);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .expense-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .expense-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .expense-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 4px;
+        }
+
+        .expense-list::-webkit-scrollbar-thumb {
+            background: var(--accent-purple);
+            border-radius: 4px;
+        }
+
+        .expense-item {
+            background: rgba(167, 139, 250, 0.05);
+            border: 1px solid rgba(167, 139, 250, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .expense-item:hover {
+            background: rgba(167, 139, 250, 0.1);
+            border-color: var(--accent-purple);
+            transform: translateX(5px);
+        }
+
+        .expense-details {
+            flex: 1;
+        }
+
+        .expense-category {
+            font-weight: 700;
+            color: var(--bright-purple);
+            margin-bottom: 4px;
+            font-size: 1.1rem;
+        }
+
+        .expense-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .expense-amount {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ef4444;
+            margin-right: 15px;
+        }
+
+        .delete-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.4);
+            border-color: #ef4444;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .empty-state::before {
+            content: '🌌';
+            display: block;
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>POCKET VAULT</h1>
+            <div class="subtitle">Your Money Tracker</div>
+        </header>
+
+        <div class="glass-card">
+            <h2 class="card-title">Financial Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Weekly Budget</div>
+                    <div class="stat-value" id="weeklyBudget">₹0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Spent</div>
+                    <div class="stat-value" id="totalSpent">₹0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Savings</div>
+                    <div class="stat-value" id="savings">₹0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <h2 class="card-title">Set Weekly Budget</h2>
+            <div class="grid-2">
+                <input type="number" id="budgetInput" placeholder="Enter weekly pocket money" min="0" step="0.01">
+                <button class="btn" onclick="setWeeklyBudget()">Update Budget</button>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <h2 class="card-title">Add Expense</h2>
+            <div class="form-group">
+                <label>Category / Description</label>
+                <input type="text" id="expenseCategory" placeholder="e.g., Snacks, Transport, Books">
+            </div>
+            <div class="form-group">
+                <label>Amount (₹)</label>
+                <input type="number" id="expenseAmount" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <button class="btn" onclick="addExpense()">Add Expense</button>
+        </div>
+
+        <div class="glass-card">
+            <h2 class="card-title">Expense History</h2>
+            <div class="expense-list" id="expenseList">
+                <div class="empty-state">
+                    No expenses yet. Your vault is secure.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize data from localStorage
+        let budget = parseFloat(localStorage.getItem('weeklyBudget')) || 0;
+        let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+
+        // Update display on load
+        updateDisplay();
+
+        function setWeeklyBudget() {
+            const budgetInput = document.getElementById('budgetInput');
+            const value = parseFloat(budgetInput.value);
+            
+            if (isNaN(value) || value < 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            budget = value;
+            localStorage.setItem('weeklyBudget', budget);
+            budgetInput.value = '';
+            updateDisplay();
+        }
+
+        function addExpense() {
+            const category = document.getElementById('expenseCategory').value.trim();
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+
+            if (!category) {
+                alert('Please enter a category/description');
+                return;
+            }
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            const expense = {
+                id: Date.now(),
+                category: category,
+                amount: amount,
+                date: new Date().toLocaleString('en-IN', { 
+                    day: '2-digit', 
+                    month: 'short', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            };
+
+            expenses.unshift(expense); // Add to beginning of array
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+
+            // Clear inputs
+            document.getElementById('expenseCategory').value = '';
+            document.getElementById('expenseAmount').value = '';
+
+            updateDisplay();
+        }
+
+        function deleteExpense(id) {
+            if (confirm('Delete this expense?')) {
+                expenses = expenses.filter(exp => exp.id !== id);
+                localStorage.setItem('expenses', JSON.stringify(expenses));
+                updateDisplay();
+            }
+        }
+
+        function updateDisplay() {
+            // Calculate total spent
+            const totalSpent = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const savings = budget - totalSpent;
+
+            // Update stats
+            document.getElementById('weeklyBudget').textContent = `₹${budget.toFixed(2)}`;
+            document.getElementById('totalSpent').textContent = `₹${totalSpent.toFixed(2)}`;
+            document.getElementById('savings').textContent = `₹${savings.toFixed(2)}`;
+
+            // Update expense list
+            const expenseList = document.getElementById('expenseList');
+            
+            if (expenses.length === 0) {
+                expenseList.innerHTML = `
+                    <div class="empty-state">
+                        No expenses yet. Your vault is secure.
+                    </div>
+                `;
+            } else {
+                expenseList.innerHTML = expenses.map(exp => `
+                    <div class="expense-item">
+                        <div class="expense-details">
+                            <div class="expense-category">${exp.category}</div>
+                            <div class="expense-date">${exp.date}</div>
+                        </div>
+                        <div class="expense-amount">-₹${exp.amount.toFixed(2)}</div>
+                        <button class="delete-btn" onclick="deleteExpense(${exp.id})">Delete</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('budgetInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') setWeeklyBudget();
+        });
+
+        document.getElementById('expenseAmount').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addExpense();
+        });
+    </script>
+</body>
+</html>

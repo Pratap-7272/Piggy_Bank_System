@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket Vault - Expense Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --deep-purple: #1a0a2e;
+            --rich-purple: #2d1b4e;
+            --accent-purple: #7c3aed;
+            --bright-purple: #a78bfa;
+            --teal-accent: #2dd4bf;
+            --red-accent: #ef4444;
+            --glass-white: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #e9d5ff;
+            --text-secondary: #c4b5fd;
+            --shadow-purple: rgba(124, 58, 237, 0.3);
+        }
+
+        body {
+            font-family: 'Syne', sans-serif;
+            background: linear-gradient(135deg, #0f0518 0%, #1a0a2e 50%, #2d1b4e 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        header { text-align: center; margin-bottom: 30px; }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #e9d5ff 0%, #a78bfa 50%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 40px var(--shadow-purple);
+        }
+
+        .subtitle { font-size: 1rem; color: var(--text-secondary); letter-spacing: 3px; text-transform: uppercase; }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex; justify-content: center; gap: 15px; margin-bottom: 30px;
+        }
+        
+        .tab-btn {
+            background: var(--glass-white);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            box-shadow: none;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent-purple), var(--bright-purple));
+            color: white;
+            box-shadow: 0 4px 20px var(--shadow-purple);
+            border-color: transparent;
+        }
+
+        .glass-card {
+            background: var(--glass-white);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem; font-weight: 700; color: var(--bright-purple);
+            margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+        }
+        .card-title::before {
+            content: ''; width: 4px; height: 24px;
+            background: linear-gradient(180deg, var(--accent-purple), var(--bright-purple));
+            border-radius: 2px; box-shadow: 0 0 10px var(--accent-purple);
+        }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+
+        .stat-box {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 16px; padding: 20px; text-align: center; transition: all 0.3s ease;
+        }
+        .stat-box:hover { transform: translateY(-5px); border-color: var(--accent-purple); box-shadow: 0 10px 30px var(--shadow-purple); }
+
+        .stat-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-secondary); margin-bottom: 10px; }
+        .stat-value { font-family: 'Orbitron', sans-serif; font-size: 2rem; font-weight: 700; color: var(--bright-purple); text-shadow: 0 0 20px var(--shadow-purple); }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; }
+        input {
+            width: 100%; padding: 14px 18px; background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-primary);
+            font-family: 'Syne', sans-serif; font-size: 1rem; transition: all 0.3s ease;
+        }
+        input:focus { outline: none; border-color: var(--accent-purple); background: rgba(255, 255, 255, 0.05); }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent-purple), var(--bright-purple));
+            color: white; border: none; padding: 14px 24px; border-radius: 12px;
+            font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 0.95rem;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease;
+            width: 100%;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--shadow-purple); }
+        .btn-outline { background: transparent; border: 1px solid var(--teal-accent); color: var(--teal-accent); }
+        .btn-outline:hover { background: rgba(45, 212, 191, 0.1); box-shadow: 0 8px 30px rgba(45, 212, 191, 0.3); }
+
+        .expense-list { max-height: 400px; overflow-y: auto; padding-right: 10px; }
+        .expense-list::-webkit-scrollbar { width: 8px; }
+        .expense-list::-webkit-scrollbar-thumb { background: var(--accent-purple); border-radius: 4px; }
+
+        .expense-item {
+            background: rgba(167, 139, 250, 0.05); border: 1px solid rgba(167, 139, 250, 0.1);
+            border-radius: 12px; padding: 16px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease;
+        }
+        .expense-item:hover { background: rgba(167, 139, 250, 0.1); border-color: var(--accent-purple); transform: translateX(5px); }
+
+        .expense-details { flex: 1; }
+        .expense-category { font-weight: 700; margin-bottom: 4px; font-size: 1.1rem; }
+        .expense-date { font-size: 0.8rem; color: var(--text-secondary); opacity: 0.7; }
+        .expense-amount { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 700; margin-right: 15px; }
+
+        .delete-btn { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
+        
+        .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); opacity: 0.6; }
+        .hidden { display: none; }
+        
+        .chart-container { position: relative; height: 300px; width: 100%; }
+
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>POCKET VAULT</h1>
+            <div class="subtitle">Next-Gen Financial Tracker</div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="btn tab-btn active" id="tabDashboard" onclick="switchTab('dashboard')">Vault Dashboard</button>
+            <button class="btn tab-btn" id="tabAnalytics" onclick="switchTab('analytics')">Analytics Hub</button>
+        </nav>
+
+        <div id="dashboardView">
+            <div class="glass-card">
+                <h2 class="card-title">Live Balance</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Available Wallet</div>
+                        <div class="stat-value" id="walletBalance" style="color: var(--teal-accent);">₹0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Savings Vault</div>
+                        <div class="stat-value" id="savingsBalance">₹0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Spent</div>
+                        <div class="stat-value" id="totalSpent" style="color: var(--red-accent);">₹0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <div class="glass-card">
+                        <h2 class="card-title">Pocket Money Setup</h2>
+                        <div class="form-group">
+                            <label>Fixed Monthly Allowance (<span id="monthlyLabel">₹0.00</span>)</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="number" id="monthlyInput" placeholder="e.g. 2000" min="0" step="0.01">
+                                <button class="btn" onclick="setMonthlyAllowance()" style="width: auto;">Set</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline" id="claimBtn" onclick="claimWeekly()">Receive Weekly Installment</button>
+                    </div>
+
+                    <div class="glass-card">
+                        <h2 class="card-title">Savings Transfer</h2>
+                        <div class="form-group">
+                            <input type="number" id="transferAmount" placeholder="Amount to move (₹)" min="0" step="0.01">
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn" onclick="handleTransfer('deposit')">To Savings</button>
+                            <button class="btn" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--red-accent);" onclick="handleTransfer('withdraw')">From Savings</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="glass-card">
+                        <h2 class="card-title">Log Expense</h2>
+                        <div class="form-group">
+                            <label>Category / Description</label>
+                            <input type="text" id="expenseCategory" placeholder="e.g., Food, Transport, Subscriptions">
+                        </div>
+                        <div class="form-group">
+                            <label>Amount (₹)</label>
+                            <input type="number" id="expenseAmount" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                        <button class="btn" onclick="addExpense()">Deduct from Wallet</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h2 class="card-title">Ledger History</h2>
+                <div class="expense-list" id="expenseList"></div>
+            </div>
+        </div>
+
+        <div id="analyticsView" class="hidden">
+            <div class="glass-card">
+                <h2 class="card-title">Financial Intelligence</h2>
+                <div class="grid-2">
+                    <div class="stat-box" style="padding: 20px;">
+                        <h3 style="margin-bottom:15px; color:var(--text-secondary); text-transform: uppercase; font-size: 0.9rem;">Expense Breakdown</h3>
+                        <div class="chart-container">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="stat-box" style="padding: 20px;">
+                        <h3 style="margin-bottom:15px; color:var(--text-secondary); text-transform: uppercase; font-size: 0.9rem;">Wallet vs Savings Over Time</h3>
+                        <div class="chart-container">
+                            <canvas id="lineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Use v2 storage key to start fresh and avoid breaking from previous data structures
+        let data = JSON.parse(localStorage.getItem('vaultData_v2')) || {
+            monthlyAllowance: 0,
+            transactions: [] 
+        };
+
+        let pieChartInstance = null;
+        let lineChartInstance = null;
+
+        updateDisplay();
+
+        function saveData() {
+            localStorage.setItem('vaultData_v2', JSON.stringify(data));
+        }
+
+        // Tab Switching Logic
+        function switchTab(tab) {
+            if(tab === 'dashboard') {
+                document.getElementById('dashboardView').classList.remove('hidden');
+                document.getElementById('analyticsView').classList.add('hidden');
+                document.getElementById('tabDashboard').classList.add('active');
+                document.getElementById('tabAnalytics').classList.remove('active');
+            } else {
+                document.getElementById('dashboardView').classList.add('hidden');
+                document.getElementById('analyticsView').classList.remove('hidden');
+                document.getElementById('tabDashboard').classList.remove('active');
+                document.getElementById('tabAnalytics').classList.add('active');
+                renderCharts();
+            }
+        }
+
+        // Core Financial Engine
+        function calculateBalances() {
+            let wallet = 0; let savings = 0; let spent = 0;
+            data.transactions.forEach(tx => {
+                if (tx.type === 'income') wallet += tx.amount;
+                if (tx.type === 'expense') { wallet -= tx.amount; spent += tx.amount; }
+                if (tx.type === 'savings_deposit') { wallet -= tx.amount; savings += tx.amount; }
+                if (tx.type === 'savings_withdraw') { savings -= tx.amount; wallet += tx.amount; }
+            });
+            return { wallet, savings, spent };
+        }
+
+        function addTransaction(type, amount, category) {
+            const tx = {
+                id: Date.now(),
+                type: type,
+                amount: amount,
+                category: category,
+                timestamp: Date.now(),
+                dateStr: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+            };
+            data.transactions.unshift(tx);
+            saveData();
+            updateDisplay();
+            if(!document.getElementById('analyticsView').classList.contains('hidden')) renderCharts();
+        }
+
+        // Action Handlers
+        function setMonthlyAllowance() {
+            const val = parseFloat(document.getElementById('monthlyInput').value);
+            if(val > 0) {
+                data.monthlyAllowance = val;
+                saveData();
+                updateDisplay();
+                document.getElementById('monthlyInput').value = '';
+            }
+        }
+
+        function claimWeekly() {
+            if(!data.monthlyAllowance) return alert('Set your monthly allowance first!');
+            addTransaction('income', data.monthlyAllowance / 4, 'Weekly Pocket Money');
+        }
+
+        function addExpense() {
+            const category = document.getElementById('expenseCategory').value.trim();
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const { wallet } = calculateBalances();
+
+            if (!category || isNaN(amount) || amount <= 0) return alert('Enter valid category and amount');
+            if (amount > wallet) return alert('Not enough funds in active wallet!');
+
+            addTransaction('expense', amount, category);
+            document.getElementById('expenseCategory').value = '';
+            document.getElementById('expenseAmount').value = '';
+        }
+
+        function handleTransfer(action) {
+            const amount = parseFloat(document.getElementById('transferAmount').value);
+            if(isNaN(amount) || amount <= 0) return alert('Enter a valid amount');
+            
+            const { wallet, savings } = calculateBalances();
+            
+            if(action === 'deposit') {
+                if(amount > wallet) return alert('Insufficient funds in wallet!');
+                addTransaction('savings_deposit', amount, 'Transferred to Savings');
+            } else {
+                if(amount > savings) return alert('Insufficient funds in savings!');
+                addTransaction('savings_withdraw', amount, 'Withdrawn from Savings');
+            }
+            document.getElementById('transferAmount').value = '';
+        }
+
+        function deleteTx(id) {
+            if(confirm('Delete this record?')) {
+                data.transactions = data.transactions.filter(t => t.id !== id);
+                saveData();
+                updateDisplay();
+                if(!document.getElementById('analyticsView').classList.contains('hidden')) renderCharts();
+            }
+        }
+
+        // Rendering Logic
+        function updateDisplay() {
+            const { wallet, savings, spent } = calculateBalances();
+            
+            document.getElementById('walletBalance').textContent = `₹${wallet.toFixed(2)}`;
+            document.getElementById('totalSpent').textContent = `₹${spent.toFixed(2)}`;
+            document.getElementById('savingsBalance').textContent = `₹${savings.toFixed(2)}`;
+            
+            document.getElementById('monthlyLabel').textContent = `₹${(data.monthlyAllowance || 0).toFixed(2)}`;
+            const weekly = (data.monthlyAllowance || 0) / 4;
+            document.getElementById('claimBtn').textContent = `Claim Weekly Installment (₹${weekly.toFixed(2)})`;
+            
+            const list = document.getElementById('expenseList');
+            if(data.transactions.length === 0) {
+                list.innerHTML = `<div class="empty-state">No activity yet. Your vault is secure.</div>`;
+            } else {
+                list.innerHTML = data.transactions.map(tx => {
+                    let color = '#a78bfa'; let sign = '';
+                    if(tx.type === 'expense' || tx.type === 'savings_deposit') { color = 'var(--red-accent)'; sign = '-'; }
+                    if(tx.type === 'income' || tx.type === 'savings_withdraw') { color = 'var(--teal-accent)'; sign = '+'; }
+                    
+                    return `
+                        <div class="expense-item">
+                            <div class="expense-details">
+                                <div class="expense-category" style="color: ${color}">${tx.category}</div>
+                                <div class="expense-date">${tx.dateStr} &bull; ${new Date(tx.timestamp).toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit'})}</div>
+                            </div>
+                            <div class="expense-amount" style="color: ${color}">${sign}₹${tx.amount.toFixed(2)}</div>
+                            <button class="delete-btn" onclick="deleteTx(${tx.id})">Del</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function renderCharts() {
+            if(pieChartInstance) pieChartInstance.destroy();
+            if(lineChartInstance) lineChartInstance.destroy();
+
+            // 1. Pie Chart Logic
+            const expenses = data.transactions.filter(t => t.type === 'expense');
+            const categories = {};
+            expenses.forEach(e => { categories[e.category] = (categories[e.category] || 0) + e.amount; });
+
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            pieChartInstance = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categories).length ? Object.keys(categories) : ['Empty'],
+                    datasets: [{
+                        data: Object.values(categories).length ? Object.values(categories) : [1],
+                        backgroundColor: Object.keys(categories).length ? ['#7c3aed', '#a78bfa', '#ef4444', '#fca5a5', '#2dd4bf'] : ['#2d1b4e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { labels: { color: '#e9d5ff' } } } }
+            });
+
+            // 2. Line Chart Logic
+            const timeline = [];
+            let runWallet = 0; let runSavings = 0;
+            
+            const sortedTx = [...data.transactions].sort((a,b) => a.timestamp - b.timestamp);
+            sortedTx.forEach(tx => {
+                if(tx.type === 'income') runWallet += tx.amount;
+                if(tx.type === 'expense') runWallet -= tx.amount;
+                if(tx.type === 'savings_deposit') { runWallet -= tx.amount; runSavings += tx.amount; }
+                if(tx.type === 'savings_withdraw') { runSavings -= tx.amount; runWallet += tx.amount; }
+                
+                timeline.push({ date: tx.dateStr, wallet: runWallet, savings: runSavings });
+            });
+
+            const eodBalances = {};
+            timeline.forEach(t => { eodBalances[t.date] = t; }); // Overwrites to keep only end-of-day balance
+            
+            const labels = Object.keys(eodBalances);
+            const walletData = labels.map(l => eodBalances[l].wallet);
+            const savingsData = labels.map(l => eodBalances[l].savings);
+
+            const lineCtx = document.getElementById('lineChart').getContext('2d');
+            lineChartInstance = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Available Wallet', data: walletData, borderColor: '#2dd4bf', tension: 0.4 },
+                        { label: 'Total Savings', data: savingsData, borderColor: '#a78bfa', tension: 0.4 }
+                    ]
+                },
+                options: { 
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { ticks: { color: '#c4b5fd' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { ticks: { color: '#c4b5fd' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e9d5ff' } } } 
+                }
+            });
+        }
+    </script>
+</body>
+</html>
